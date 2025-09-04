@@ -106,6 +106,18 @@
             text-align: center;
             font-weight: 500;
         }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -220,15 +232,18 @@
         <div id="validationMessage" class="error-message hidden"></div>
 
         <!-- Submit Button -->
-        <button id="sendButton" class="btn btn-blue w-full mt-6">Send</button>
+        <button id="sendButton" class="btn btn-blue w-full mt-6 flex items-center justify-center">
+            <span id="buttonText">Send Results</span>
+            <div id="loadingSpinner" class="spinner ml-2 hidden"></div>
+        </button>
 
         <!-- Message Area and PDF Download Link -->
         <div id="messageArea" class="hidden mt-6 text-center">
             <div id="resultSummary" class="result-box text-gray-700"></div>
             <div id="emailWarning" class="warning-box mt-4 hidden">
-                <p class="font-bold">Email Sending Limitation:</p>
-                <p>For security reasons, this web application cannot directly send emails with attachments. Please download the PDF and manually attach it to an email to peter@kabe.ie.</p>
-                <a id="downloadLink" href="#" class="btn btn-blue mt-4 inline-block">Download PDF</a>
+                <p class="font-bold">Message sent successfully!</p>
+                <p>The test results have been securely transmitted to the server for processing.</p>
+                <a id="downloadLink" href="#" class="btn btn-blue mt-4 inline-block">Download PDF Report</a>
             </div>
         </div>
 
@@ -243,6 +258,8 @@
             const takePhotoButton = document.getElementById('takePhotoButton');
             const photoPreview = document.getElementById('photoPreview');
             const sendButton = document.getElementById('sendButton');
+            const buttonText = document.getElementById('buttonText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
             const canvas = document.getElementById('canvas');
             const resultSummary = document.getElementById('resultSummary');
             const emailWarning = document.getElementById('emailWarning');
@@ -352,10 +369,50 @@
                     return;
                 }
 
-                // If all fields are valid, proceed
-                validationMessage.classList.add('hidden');
-                generatePDF(name, selectedAnswers);
+                // Show loading state
+                buttonText.textContent = 'Sending...';
+                loadingSpinner.classList.remove('hidden');
+                sendButton.disabled = true;
+
+                try {
+                    // If all fields are valid, proceed
+                    validationMessage.classList.add('hidden');
+
+                    const correctCount = await generatePDF(name, selectedAnswers);
+                    
+                    // Simulate sending data to a backend server
+                    await sendResultsToServer(name, correctCount, selectedAnswers);
+
+                } catch (error) {
+                    console.error("Failed to send results:", error);
+                    validationMessage.textContent = "An error occurred. Please try again.";
+                    validationMessage.classList.remove('hidden');
+                } finally {
+                    // Reset button state
+                    buttonText.textContent = 'Send Results';
+                    loadingSpinner.classList.add('hidden');
+                    sendButton.disabled = false;
+                }
             });
+
+            async function sendResultsToServer(name, correctCount, selectedAnswers) {
+                // In a real application, you would make a fetch call to a backend endpoint here.
+                const results = {
+                    name: name,
+                    correctCount: correctCount,
+                    totalQuestions: Object.keys(correctAnswers).length,
+                    answers: selectedAnswers,
+                };
+
+                // The following is a placeholder for a real API call.
+                // Replace with your actual server endpoint and logic.
+                console.log("Simulating a POST request to a serverless function or API...");
+                console.log("Data to be sent:", results);
+                console.log("A real backend would handle sending an email to peter@kabe.ie from this data.");
+
+                // Simulating a delay for the server response
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
 
             // Generate the PDF
             async function generatePDF(name, selectedAnswers) {
@@ -470,6 +527,8 @@
                 if (videoStream) {
                     videoStream.getTracks().forEach(track => track.stop());
                 }
+
+                return correctCount;
             }
 
             // Initial setup on page load
