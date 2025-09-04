@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safety Test</title>
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 768px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #4b5563;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus {
+            border-color: #3b82f6;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .btn-blue {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .btn-blue:hover {
+            background-color: #2563eb;
+        }
+        .btn-blue:active {
+            transform: scale(0.98);
+        }
+        /* Updated custom styles for smartphone aspect ratio */
+        .smartphone-aspect-ratio {
+            position: relative;
+            width: 100%;
+            padding-top: 133.33%; /* 4 / 3 = 1.3333... for 3:4 portrait ratio */
+            border-radius: 0.75rem;
+            overflow: hidden;
+            background-color: #e5e7eb;
+            margin-top: 1rem;
+        }
+        .smartphone-aspect-ratio video,
+        .smartphone-aspect-ratio img,
+        .smartphone-aspect-ratio canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .result-box {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background-color: #e5e7eb;
+        }
+        .warning-box {
+            padding: 1rem;
+            margin-top: 1.5rem;
+            background-color: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #b91c1c;
+            border-radius: 0.75rem;
+        }
+        .error-message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background-color: #fee2e2;
+            color: #dc2626;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="container mx-auto p-8 bg-white rounded-3xl shadow-lg">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Construction Site Safety Test</h1>
+        <p class="text-center text-gray-500 mb-8">Please enter your details and answer the following questions to complete the test.</p>
+
+        <!-- User Information Section -->
+        <div class="form-group">
+            <label for="nameInput">Full Name</label>
+            <input type="text" id="nameInput" placeholder="Enter your full name" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition">
+        </div>
+
+        <!-- Camera Section -->
+        <div class="form-group">
+            <label for="cameraFeed">Photo from Camera</label>
+            <div class="smartphone-aspect-ratio">
+                <video id="cameraFeed" autoplay></video>
+                <img id="photoPreview" class="hidden" alt="Captured Photo">
+            </div>
+            <button id="takePhotoButton" class="btn btn-blue w-full mt-2">Take Photo</button>
+        </div>
+
+        <!-- Test Questions Section -->
+        <div class="space-y-6">
+            <div class="form-group">
+                <label>1. Do you need a safe pass on site?</label>
+                <div class="mt-2 space-y-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q1" value="Yes" class="form-radio text-blue-600">
+                        <span>Yes</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q1" value="No" class="form-radio text-blue-600">
+                        <span>No</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>2. What is the thickness of basecoat?</label>
+                <div class="mt-2 space-y-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q2" value="10mm" class="form-radio text-blue-600">
+                        <span>10mm</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q2" value="5mm" class="form-radio text-blue-600">
+                        <span>5mm</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q2" value="20mm" class="form-radio text-blue-600">
+                        <span>20mm</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>3. What is the primary purpose of a hard hat on a construction site?</label>
+                <div class="mt-2 space-y-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q3" value="To identify workers" class="form-radio text-blue-600">
+                        <span>To identify workers</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q3" value="To protect against falling objects" class="form-radio text-blue-600">
+                        <span>To protect against falling objects</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q3" value="To keep hair tidy" class="form-radio text-blue-600">
+                        <span>To keep hair tidy</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>4. True or False: You should always use a ladder to reach a high place instead of a chair.</label>
+                <div class="mt-2 space-y-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q4" value="True" class="form-radio text-blue-600">
+                        <span>True</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q4" value="False" class="form-radio text-blue-600">
+                        <span>False</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>5. What is the correct way to lift a heavy object?</label>
+                <div class="mt-2 space-y-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q5" value="By bending your back" class="form-radio text-blue-600">
+                        <span>By bending your back</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q5" value="By using your legs and keeping your back straight" class="form-radio text-blue-600">
+                        <span>By using your legs and keeping your back straight</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="q5" value="By bending your knees slightly" class="form-radio text-blue-600">
+                        <span>By bending your knees slightly</span>
+                    </label>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Error Message Area -->
+        <div id="validationMessage" class="error-message hidden"></div>
+
+        <!-- Submit Button -->
+        <button id="sendButton" class="btn btn-blue w-full mt-6">Send</button>
+
+        <!-- Message Area and PDF Download Link -->
+        <div id="messageArea" class="hidden mt-6 text-center">
+            <div id="resultSummary" class="result-box text-gray-700"></div>
+            <div id="emailWarning" class="warning-box mt-4 hidden">
+                <p class="font-bold">Email Sending Limitation:</p>
+                <p>For security reasons, this web application cannot directly send emails with attachments. Please download the PDF and manually attach it to an email to peter@kabe.ie.</p>
+                <a id="downloadLink" href="#" class="btn btn-blue mt-4 inline-block">Download PDF</a>
+            </div>
+        </div>
+
+        <!-- Hidden canvas for photo processing -->
+        <canvas id="canvas" class="hidden"></canvas>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const nameInput = document.getElementById('nameInput');
+            const cameraFeed = document.getElementById('cameraFeed');
+            const takePhotoButton = document.getElementById('takePhotoButton');
+            const photoPreview = document.getElementById('photoPreview');
+            const sendButton = document.getElementById('sendButton');
+            const canvas = document.getElementById('canvas');
+            const resultSummary = document.getElementById('resultSummary');
+            const emailWarning = document.getElementById('emailWarning');
+            const downloadLink = document.getElementById('downloadLink');
+            const messageArea = document.getElementById('messageArea');
+            const validationMessage = document.getElementById('validationMessage');
+
+            let videoStream = null;
+            let capturedPhotoDataURL = null;
+
+            // Define the correct answers
+            const correctAnswers = {
+                q1: 'Yes',
+                q2: '5mm',
+                q3: 'To protect against falling objects',
+                q4: 'True',
+                q5: 'By using your legs and keeping your back straight'
+            };
+
+            // Register Service Worker
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('service-worker.js')
+                        .then(reg => console.log('Service Worker registered!', reg))
+                        .catch(err => console.log('Service Worker registration failed: ', err));
+                });
+            }
+
+            // Request camera access
+            async function setupCamera() {
+                try {
+                    videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                    cameraFeed.srcObject = videoStream;
+                } catch (err) {
+                    console.error("Error accessing the camera: ", err);
+                    validationMessage.textContent = "Unable to access camera. Please check your permissions.";
+                    validationMessage.classList.remove('hidden');
+                }
+            }
+
+            // Capture photo from video stream
+            takePhotoButton.addEventListener('click', () => {
+                if (!videoStream) {
+                    validationMessage.textContent = "Camera not ready. Please allow camera access first.";
+                    validationMessage.classList.remove('hidden');
+                    return;
+                }
+                
+                // Hide any previous validation messages
+                validationMessage.classList.add('hidden');
+
+                const context = canvas.getContext('2d');
+                // Set canvas dimensions to a 3:4 aspect ratio
+                const canvasHeight = 640;
+                const canvasWidth = (canvasHeight / 4) * 3;
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
+
+                // Capture a portion of the video feed to match the canvas aspect ratio
+                const videoWidth = cameraFeed.videoWidth;
+                const videoHeight = cameraFeed.videoHeight;
+                const videoRatio = videoWidth / videoHeight;
+                const canvasRatio = canvasWidth / canvasHeight;
+
+                let sourceX = 0;
+                let sourceY = 0;
+                let sourceWidth = videoWidth;
+                let sourceHeight = videoHeight;
+
+                if (videoRatio > canvasRatio) {
+                    sourceWidth = videoHeight * canvasRatio;
+                    sourceX = (videoWidth - sourceWidth) / 2;
+                } else {
+                    sourceHeight = videoWidth / canvasRatio;
+                    sourceY = (videoHeight - sourceHeight) / 2;
+                }
+
+                context.drawImage(cameraFeed, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvasWidth, canvasHeight);
+                capturedPhotoDataURL = canvas.toDataURL('image/png');
+
+                photoPreview.src = capturedPhotoDataURL;
+                photoPreview.classList.remove('hidden');
+                cameraFeed.classList.add('hidden');
+                takePhotoButton.textContent = 'Retake Photo';
+            });
+
+            // Handle the send button click
+            sendButton.addEventListener('click', async () => {
+                const name = nameInput.value.trim();
+                const selectedAnswers = {
+                    q1: document.querySelector('input[name="q1"]:checked')?.value,
+                    q2: document.querySelector('input[name="q2"]:checked')?.value,
+                    q3: document.querySelector('input[name="q3"]:checked')?.value,
+                    q4: document.querySelector('input[name="q4"]:checked')?.value,
+                    q5: document.querySelector('input[name="q5"]:checked')?.value,
+                };
+                
+                let missingFields = [];
+                if (!name) missingFields.push("full name");
+                if (!capturedPhotoDataURL) missingFields.push("a photo");
+                if (Object.values(selectedAnswers).some(val => !val)) missingFields.push("all the questions");
+
+                if (missingFields.length > 0) {
+                    let message = "Please fill in " + missingFields.join(" and ") + " to submit.";
+                    validationMessage.textContent = message;
+                    validationMessage.classList.remove('hidden');
+                    return;
+                }
+
+                // If all fields are valid, proceed
+                validationMessage.classList.add('hidden');
+                generatePDF(name, selectedAnswers);
+            });
+
+            // Generate the PDF
+            async function generatePDF(name, selectedAnswers) {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                let correctCount = 0;
+                let totalQuestions = Object.keys(correctAnswers).length;
+
+                // Title
+                doc.setFontSize(22);
+                doc.text("Safety Test Report", 105, 20, null, null, "center");
+
+                // User Info
+                doc.setFontSize(16);
+                doc.text(`Name: ${name}`, 20, 40);
+
+                // Photo
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text("Photo for Report", 20, 50);
+                if (capturedPhotoDataURL) {
+                    doc.addImage(capturedPhotoDataURL, 'PNG', 20, 55, 60, 80); // Set height based on 3:4 aspect ratio
+                }
+
+                // Questions and Answers
+                let y = 145; 
+                doc.setFontSize(16);
+                doc.text("Test Answers", 20, y);
+                y += 10;
+                
+                doc.setFontSize(12);
+                const questions = [
+                    "1. Do you need a safe pass on site?",
+                    "2. What is the thickness of basecoat?",
+                    "3. What is the primary purpose of a hard hat on a construction site?",
+                    "4. True or False: You should always use a ladder to reach a high place instead of a chair.",
+                    "5. What is the correct way to lift a heavy object?"
+                ];
+                
+                const answers = [
+                    selectedAnswers.q1,
+                    selectedAnswers.q2,
+                    selectedAnswers.q3,
+                    selectedAnswers.q4,
+                    selectedAnswers.q5
+                ];
+
+                const correctAnswersArray = [
+                    correctAnswers.q1,
+                    correctAnswers.q2,
+                    correctAnswers.q3,
+                    correctAnswers.q4,
+                    correctAnswers.q5
+                ];
+                
+                for (let i = 0; i < questions.length; i++) {
+                    const question = questions[i];
+                    const userAnswer = answers[i] || 'Not Answered';
+                    const isCorrect = userAnswer === correctAnswersArray[i];
+
+                    doc.setFont(undefined, 'bold');
+                    doc.text(question, 20, y);
+                    y += 10;
+                    doc.setFont(undefined, 'normal');
+
+                    if (isCorrect) {
+                        doc.setTextColor(34, 139, 34); // Forest green
+                        correctCount++;
+                    } else {
+                        doc.setTextColor(255, 0, 0); // Red
+                    }
+
+                    doc.text(`Your Answer: ${userAnswer} (${isCorrect ? 'Correct' : 'Incorrect'})`, 25, y);
+                    doc.setTextColor(0, 0, 0); // Reset color to black
+                    y += 6;
+                    doc.text(`Correct Answer: ${correctAnswersArray[i]}`, 25, y);
+                    y += 10;
+                }
+                
+                // Add a new page if summary won't fit
+                if (y > 250) {
+                    doc.addPage();
+                    y = 30; // Reset Y for new page
+                }
+                
+                // Summary of results
+                const percentage = (correctCount / totalQuestions) * 100;
+                doc.setFontSize(16);
+                doc.text("Summary of Results", 20, y);
+                doc.setFontSize(12);
+                doc.text(`Correct Answers: ${correctCount} out of ${totalQuestions}`, 20, y + 10);
+                doc.text(`Percentage Correct: ${percentage.toFixed(2)}%`, 20, y + 20);
+                
+                // Show the results and download link
+                resultSummary.innerHTML = `
+                    <h3 class="text-xl font-bold mb-2">Test Completed!</h3>
+                    <p class="text-lg">Correct Answers: <span class="font-bold">${correctCount}</span> out of ${totalQuestions}</p>
+                    <p class="text-lg">Percentage: <span class="font-bold">${percentage.toFixed(2)}%</span></p>
+                `;
+                messageArea.classList.remove('hidden');
+                emailWarning.classList.remove('hidden');
+                
+                const pdfName = `SafetyTest_${name.replace(/\s/g, '_')}.pdf`;
+                const pdfBlob = doc.output('blob');
+                const pdfURL = URL.createObjectURL(pdfBlob);
+
+                downloadLink.href = pdfURL;
+                downloadLink.download = pdfName;
+                
+                // Optional: Stop the video stream after a successful test completion
+                if (videoStream) {
+                    videoStream.getTracks().forEach(track => track.stop());
+                }
+            }
+
+            // Initial setup on page load
+            setupCamera();
+        });
+    </script>
+
+</body>
+</html>
