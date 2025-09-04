@@ -241,8 +241,8 @@
         <div id="messageArea" class="hidden mt-6 text-center">
             <div id="resultSummary" class="result-box text-gray-700"></div>
             <div id="emailWarning" class="warning-box mt-4 hidden">
-                <p class="font-bold">Message sent successfully!</p>
-                <p>The test results have been securely transmitted to the server for processing.</p>
+                <p class="font-bold">Message sent to server!</p>
+                <p>The test results have been securely transmitted to the server for processing and email delivery. You still need to configure the backend to send the email.</p>
                 <a id="downloadLink" href="#" class="btn btn-blue mt-4 inline-block">Download PDF Report</a>
             </div>
         </div>
@@ -380,7 +380,7 @@
 
                     const correctCount = await generatePDF(name, selectedAnswers);
                     
-                    // Simulate sending data to a backend server
+                    // Call the function to send data to your backend
                     await sendResultsToServer(name, correctCount, selectedAnswers);
 
                 } catch (error) {
@@ -396,7 +396,15 @@
             });
 
             async function sendResultsToServer(name, correctCount, selectedAnswers) {
-                // In a real application, you would make a fetch call to a backend endpoint here.
+                // --- IMPORTANT: READ THIS SECTION ---
+                // This is the part that would send data to a backend server.
+                // It is currently a simulation (it just logs to the console).
+                // To make this work, you need to create a server endpoint (e.g., a Firebase function,
+                // an API endpoint on a web server, etc.) that will handle the email.
+                // The URL below is a placeholder. You must replace it with your own.
+
+                const serverUrl = "https://your-backend-api-endpoint.com/send-email";
+
                 const results = {
                     name: name,
                     correctCount: correctCount,
@@ -404,11 +412,33 @@
                     answers: selectedAnswers,
                 };
 
-                // The following is a placeholder for a real API call.
-                // Replace with your actual server endpoint and logic.
+                // The following is an example of what a real fetch call might look like.
+                // Replace this with your actual server endpoint and logic.
                 console.log("Simulating a POST request to a serverless function or API...");
                 console.log("Data to be sent:", results);
                 console.log("A real backend would handle sending an email to peter@kabe.ie from this data.");
+
+                // Example of a fetch call:
+                /*
+                try {
+                    const response = await fetch(serverUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(results),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Server responded with an error');
+                    }
+                    const responseData = await response.json();
+                    console.log('Server response:', responseData);
+                } catch (error) {
+                    console.error("Error sending data to server:", error);
+                    // Handle the error appropriately
+                }
+                */
 
                 // Simulating a delay for the server response
                 await new Promise(resolve => setTimeout(resolve, 2000));
