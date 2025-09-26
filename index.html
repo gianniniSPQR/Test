@@ -53,21 +53,25 @@
             cursor: pointer;
             transition: background-color 0.2s, transform 0.1s;
         }
+        .btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
         .btn-blue {
             background-color: #3b82f6;
             color: white;
         }
-        .btn-blue:hover {
+        .btn-blue:hover:not(:disabled) {
             background-color: #2563eb;
         }
-        .btn-blue:active {
+        .btn-blue:active:not(:disabled) {
             transform: scale(0.98);
         }
-        /* Updated custom styles for smartphone aspect ratio */
+        /* New custom styles for smartphone aspect ratio */
         .smartphone-aspect-ratio {
             position: relative;
             width: 100%;
-            padding-top: 133.33%; /* 4 / 3 = 1.3333... for 3:4 portrait ratio */
+            padding-top: 177.77%; /* 16 / 9 = 1.7777... for 9:16 portrait ratio */
             border-radius: 0.75rem;
             overflow: hidden;
             background-color: #e5e7eb;
@@ -97,33 +101,39 @@
             color: #b91c1c;
             border-radius: 0.75rem;
         }
-        .error-message {
-            margin-top: 1rem;
-            padding: 0.75rem;
-            background-color: #fee2e2;
-            color: #dc2626;
-            border-radius: 0.5rem;
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
             text-align: center;
-            font-weight: 500;
-        }
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid #fff;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
     <div class="container mx-auto p-8 bg-white rounded-3xl shadow-lg">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Construction Site Safety Test</h1>
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-900">ALPHA MODERN PRODUCT</h1>
+            <p class="text-lg text-gray-500">official distributor of KABE Products</p>
+        </div>
+        <hr class="my-6 border-gray-200">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Test for KABE Therm ETICS Installers</h2>
         <p class="text-center text-gray-500 mb-8">Please enter your details and answer the following questions to complete the test.</p>
 
         <!-- User Information Section -->
@@ -136,10 +146,13 @@
         <div class="form-group">
             <label for="cameraFeed">Photo from Camera</label>
             <div class="smartphone-aspect-ratio">
-                <video id="cameraFeed" autoplay></video>
+                <video id="cameraFeed" autoplay playsinline></video>
                 <img id="photoPreview" class="hidden" alt="Captured Photo">
+                <div id="cameraMessage" class="absolute inset-0 flex items-center justify-center text-center p-4 bg-gray-800 bg-opacity-75 text-white rounded-xl">
+                    <p>Requesting camera access...</p>
+                </div>
             </div>
-            <button id="takePhotoButton" class="btn btn-blue w-full mt-2">Take Photo</button>
+            <button id="takePhotoButton" class="btn btn-blue w-full mt-2" disabled>Take Photo</button>
         </div>
 
         <!-- Test Questions Section -->
@@ -228,27 +241,28 @@
 
         </div>
 
-        <!-- Error Message Area -->
-        <div id="validationMessage" class="error-message hidden"></div>
-
         <!-- Submit Button -->
-        <button id="sendButton" class="btn btn-blue w-full mt-6 flex items-center justify-center">
-            <span id="buttonText">Send Results</span>
-            <div id="loadingSpinner" class="spinner ml-2 hidden"></div>
-        </button>
+        <button id="sendButton" class="btn btn-blue w-full mt-6">Send</button>
 
         <!-- Message Area and PDF Download Link -->
         <div id="messageArea" class="hidden mt-6 text-center">
             <div id="resultSummary" class="result-box text-gray-700"></div>
-            <div id="emailWarning" class="warning-box mt-4 hidden">
-                <p class="font-bold">Message sent to server!</p>
-                <p>The test results have been securely transmitted to the server for processing and email delivery. You still need to configure the backend to send the email.</p>
-                <a id="downloadLink" href="#" class="btn btn-blue mt-4 inline-block">Download PDF Report</a>
+            <div id="downloadContainer" class="mt-4 hidden">
+                <a id="downloadLink" href="#" class="btn btn-blue mt-4 inline-block">Download Report as PDF</a>
             </div>
         </div>
 
         <!-- Hidden canvas for photo processing -->
         <canvas id="canvas" class="hidden"></canvas>
+
+        <!-- Custom Alert/Modal -->
+        <div id="customModal" class="modal">
+            <div class="modal-content">
+                <h3 class="text-xl font-bold mb-4" id="modalTitle"></h3>
+                <p id="modalMessage" class="mb-4"></p>
+                <button id="closeModalBtn" class="btn btn-blue">OK</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -257,15 +271,17 @@
             const cameraFeed = document.getElementById('cameraFeed');
             const takePhotoButton = document.getElementById('takePhotoButton');
             const photoPreview = document.getElementById('photoPreview');
+            const cameraMessage = document.getElementById('cameraMessage');
             const sendButton = document.getElementById('sendButton');
-            const buttonText = document.getElementById('buttonText');
-            const loadingSpinner = document.getElementById('loadingSpinner');
             const canvas = document.getElementById('canvas');
             const resultSummary = document.getElementById('resultSummary');
-            const emailWarning = document.getElementById('emailWarning');
+            const downloadContainer = document.getElementById('downloadContainer');
             const downloadLink = document.getElementById('downloadLink');
             const messageArea = document.getElementById('messageArea');
-            const validationMessage = document.getElementById('validationMessage');
+            const customModal = document.getElementById('customModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            const closeModalBtn = document.getElementById('closeModalBtn');
 
             let videoStream = null;
             let capturedPhotoDataURL = null;
@@ -279,6 +295,18 @@
                 q5: 'By using your legs and keeping your back straight'
             };
 
+            // Function to show the custom modal
+            const showModal = (title, message) => {
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                customModal.style.display = 'flex';
+            };
+
+            // Function to hide the custom modal
+            closeModalBtn.addEventListener('click', () => {
+                customModal.style.display = 'none';
+            });
+
             // Register Service Worker
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
@@ -290,44 +318,48 @@
 
             // Request camera access
             async function setupCamera() {
+                cameraMessage.classList.remove('hidden');
+                takePhotoButton.disabled = true;
                 try {
                     videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
                     cameraFeed.srcObject = videoStream;
+                    cameraMessage.classList.add('hidden');
+                    takePhotoButton.disabled = false;
                 } catch (err) {
                     console.error("Error accessing the camera: ", err);
-                    validationMessage.textContent = "Unable to access camera. Please check your permissions.";
-                    validationMessage.classList.remove('hidden');
+                    const errorMessage = "Camera access denied. Please allow camera access in your browser settings and refresh the page.";
+                    cameraMessage.querySelector('p').textContent = errorMessage;
+                    showModal("Camera Access Denied", "Camera access is required for this test. Please check your browser's site permissions and refresh the page.");
                 }
             }
 
             // Capture photo from video stream
             takePhotoButton.addEventListener('click', () => {
-                if (!videoStream) {
-                    validationMessage.textContent = "Camera not ready. Please allow camera access first.";
-                    validationMessage.classList.remove('hidden');
+                if (takePhotoButton.textContent === 'Retake Photo') {
+                    photoPreview.classList.add('hidden');
+                    cameraFeed.classList.remove('hidden');
+                    takePhotoButton.textContent = 'Take Photo';
+                    capturedPhotoDataURL = null; // Clear previous photo
                     return;
                 }
-                
-                // Hide any previous validation messages
-                validationMessage.classList.add('hidden');
+
+                if (!videoStream) {
+                    showModal("Camera Not Ready", "Please allow camera access first.");
+                    return;
+                }
 
                 const context = canvas.getContext('2d');
-                // Set canvas dimensions to a 3:4 aspect ratio
                 const canvasHeight = 640;
-                const canvasWidth = (canvasHeight / 4) * 3;
+                const canvasWidth = (canvasHeight / 16) * 9;
                 canvas.width = canvasWidth;
                 canvas.height = canvasHeight;
 
-                // Capture a portion of the video feed to match the canvas aspect ratio
                 const videoWidth = cameraFeed.videoWidth;
                 const videoHeight = cameraFeed.videoHeight;
                 const videoRatio = videoWidth / videoHeight;
                 const canvasRatio = canvasWidth / canvasHeight;
 
-                let sourceX = 0;
-                let sourceY = 0;
-                let sourceWidth = videoWidth;
-                let sourceHeight = videoHeight;
+                let sourceX = 0, sourceY = 0, sourceWidth = videoWidth, sourceHeight = videoHeight;
 
                 if (videoRatio > canvasRatio) {
                     sourceWidth = videoHeight * canvasRatio;
@@ -357,92 +389,13 @@
                     q5: document.querySelector('input[name="q5"]:checked')?.value,
                 };
                 
-                let missingFields = [];
-                if (!name) missingFields.push("full name");
-                if (!capturedPhotoDataURL) missingFields.push("a photo");
-                if (Object.values(selectedAnswers).some(val => !val)) missingFields.push("all the questions");
-
-                if (missingFields.length > 0) {
-                    let message = "Please fill in " + missingFields.join(" and ") + " to submit.";
-                    validationMessage.textContent = message;
-                    validationMessage.classList.remove('hidden');
+                if (!name || !capturedPhotoDataURL || Object.values(selectedAnswers).some(val => !val)) {
+                    showModal("Missing Information", "Please fill in your name, take a photo, and answer all questions before sending.");
                     return;
                 }
 
-                // Show loading state
-                buttonText.textContent = 'Sending...';
-                loadingSpinner.classList.remove('hidden');
-                sendButton.disabled = true;
-
-                try {
-                    // If all fields are valid, proceed
-                    validationMessage.classList.add('hidden');
-
-                    const correctCount = await generatePDF(name, selectedAnswers);
-                    
-                    // Call the function to send data to your backend
-                    await sendResultsToServer(name, correctCount, selectedAnswers);
-
-                } catch (error) {
-                    console.error("Failed to send results:", error);
-                    validationMessage.textContent = "An error occurred. Please try again.";
-                    validationMessage.classList.remove('hidden');
-                } finally {
-                    // Reset button state
-                    buttonText.textContent = 'Send Results';
-                    loadingSpinner.classList.add('hidden');
-                    sendButton.disabled = false;
-                }
+                generatePDF(name, selectedAnswers);
             });
-
-            async function sendResultsToServer(name, correctCount, selectedAnswers) {
-                // --- IMPORTANT: READ THIS SECTION ---
-                // This is the part that would send data to a backend server.
-                // It is currently a simulation (it just logs to the console).
-                // To make this work, you need to create a server endpoint (e.g., a Firebase function,
-                // an API endpoint on a web server, etc.) that will handle the email.
-                // The URL below is a placeholder. You must replace it with your own.
-
-                const serverUrl = "https://your-backend-api-endpoint.com/send-email";
-
-                const results = {
-                    name: name,
-                    correctCount: correctCount,
-                    totalQuestions: Object.keys(correctAnswers).length,
-                    answers: selectedAnswers,
-                };
-
-                // The following is an example of what a real fetch call might look like.
-                // Replace this with your actual server endpoint and logic.
-                console.log("Simulating a POST request to a serverless function or API...");
-                console.log("Data to be sent:", results);
-                console.log("A real backend would handle sending an email to peter@kabe.ie from this data.");
-
-                // Example of a fetch call:
-                /*
-                try {
-                    const response = await fetch(serverUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(results),
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Server responded with an error');
-                    }
-                    const responseData = await response.json();
-                    console.log('Server response:', responseData);
-                } catch (error) {
-                    console.error("Error sending data to server:", error);
-                    // Handle the error appropriately
-                }
-                */
-
-                // Simulating a delay for the server response
-                await new Promise(resolve => setTimeout(resolve, 2000));
-            }
 
             // Generate the PDF
             async function generatePDF(name, selectedAnswers) {
@@ -450,31 +403,21 @@
                 const doc = new jsPDF();
                 
                 let correctCount = 0;
-                let totalQuestions = Object.keys(correctAnswers).length;
+                const totalQuestions = Object.keys(correctAnswers).length;
 
-                // Title
                 doc.setFontSize(22);
                 doc.text("Safety Test Report", 105, 20, null, null, "center");
 
-                // User Info
                 doc.setFontSize(16);
                 doc.text(`Name: ${name}`, 20, 40);
 
-                // Photo
-                doc.setFontSize(12);
-                doc.setFont(undefined, 'bold');
-                doc.text("Photo for Report", 20, 50);
                 if (capturedPhotoDataURL) {
-                    doc.addImage(capturedPhotoDataURL, 'PNG', 20, 55, 60, 80); // Set height based on 3:4 aspect ratio
+                    doc.addImage(capturedPhotoDataURL, 'PNG', 20, 50, 60, 106.67);
                 }
 
-                // Questions and Answers
-                let y = 145; 
-                doc.setFontSize(16);
-                doc.text("Test Answers", 20, y);
-                y += 10;
-                
                 doc.setFontSize(12);
+                let y = 165;
+                
                 const questions = [
                     "1. Do you need a safe pass on site?",
                     "2. What is the thickness of basecoat?",
@@ -484,52 +427,31 @@
                 ];
                 
                 const answers = [
-                    selectedAnswers.q1,
-                    selectedAnswers.q2,
-                    selectedAnswers.q3,
-                    selectedAnswers.q4,
-                    selectedAnswers.q5
+                    selectedAnswers.q1, selectedAnswers.q2, selectedAnswers.q3,
+                    selectedAnswers.q4, selectedAnswers.q5
                 ];
 
-                const correctAnswersArray = [
-                    correctAnswers.q1,
-                    correctAnswers.q2,
-                    correctAnswers.q3,
-                    correctAnswers.q4,
-                    correctAnswers.q5
-                ];
+                const correctAnswersArray = Object.values(correctAnswers);
                 
                 for (let i = 0; i < questions.length; i++) {
-                    const question = questions[i];
                     const userAnswer = answers[i] || 'Not Answered';
-                    const isCorrect = userAnswer === correctAnswersArray[i];
-
-                    doc.setFont(undefined, 'bold');
-                    doc.text(question, 20, y);
-                    y += 10;
-                    doc.setFont(undefined, 'normal');
-
-                    if (isCorrect) {
-                        doc.setTextColor(34, 139, 34); // Forest green
+                    if (userAnswer === correctAnswersArray[i]) {
                         correctCount++;
-                    } else {
-                        doc.setTextColor(255, 0, 0); // Red
                     }
-
-                    doc.text(`Your Answer: ${userAnswer} (${isCorrect ? 'Correct' : 'Incorrect'})`, 25, y);
-                    doc.setTextColor(0, 0, 0); // Reset color to black
+                    if (y > 260) { // Add new page if content overflows
+                        doc.addPage();
+                        y = 20;
+                    }
+                    doc.setFont(undefined, 'bold');
+                    doc.text(questions[i], 20, y);
+                    y += 8;
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`Your Answer: ${userAnswer}`, 25, y);
                     y += 6;
                     doc.text(`Correct Answer: ${correctAnswersArray[i]}`, 25, y);
                     y += 10;
                 }
                 
-                // Add a new page if summary won't fit
-                if (y > 250) {
-                    doc.addPage();
-                    y = 30; // Reset Y for new page
-                }
-                
-                // Summary of results
                 const percentage = (correctCount / totalQuestions) * 100;
                 doc.setFontSize(16);
                 doc.text("Summary of Results", 20, y);
@@ -537,14 +459,13 @@
                 doc.text(`Correct Answers: ${correctCount} out of ${totalQuestions}`, 20, y + 10);
                 doc.text(`Percentage Correct: ${percentage.toFixed(2)}%`, 20, y + 20);
                 
-                // Show the results and download link
                 resultSummary.innerHTML = `
                     <h3 class="text-xl font-bold mb-2">Test Completed!</h3>
                     <p class="text-lg">Correct Answers: <span class="font-bold">${correctCount}</span> out of ${totalQuestions}</p>
                     <p class="text-lg">Percentage: <span class="font-bold">${percentage.toFixed(2)}%</span></p>
                 `;
                 messageArea.classList.remove('hidden');
-                emailWarning.classList.remove('hidden');
+                downloadContainer.classList.remove('hidden');
                 
                 const pdfName = `SafetyTest_${name.replace(/\s/g, '_')}.pdf`;
                 const pdfBlob = doc.output('blob');
@@ -553,12 +474,15 @@
                 downloadLink.href = pdfURL;
                 downloadLink.download = pdfName;
                 
-                // Optional: Stop the video stream after a successful test completion
+                // Disable form elements after completion
+                nameInput.disabled = true;
+                document.querySelectorAll('input[type="radio"]').forEach(radio => radio.disabled = true);
+                takePhotoButton.disabled = true;
+                sendButton.disabled = true;
+                
                 if (videoStream) {
                     videoStream.getTracks().forEach(track => track.stop());
                 }
-
-                return correctCount;
             }
 
             // Initial setup on page load
@@ -568,3 +492,6 @@
 
 </body>
 </html>
+
+
+
